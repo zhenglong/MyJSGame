@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="3" height="3" tilewidth="70" tileheight="62">
+ <tileset firstgid="1" name="box-close" tilewidth="70" tileheight="62">
+  <image source="box-close.png" width="70" height="62"/>
+ </tileset>
+ <layer name="bg" width="3" height="3">
+  <data encoding="base64" compression="zlib">
+   eJxjZGBgYCSAAQDYAAo=
+  </data>
+ </layer>
+</map>
