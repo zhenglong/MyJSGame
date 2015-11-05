@@ -108,28 +108,69 @@ var ConversationLayer = cc.Layer.extend({
 var Scene3 = cc.Scene.extend({
 	ctor: function() {
 		this._super();
-		var size = cc.winSize;
-		var boxes = new BoxesTiledMap();
-		var bound = boxes.boundingBox();
-		boxes.setPosition((size.width -bound.width) / 2, 
-			(size.height - bound.height) / 2);
-		this.addChild(boxes);
-		var mapSize = boxes.getMapSize();
-		var layer = boxes.getLayer('bg');
+		var layer = new BoxesLayer();
+		this.addChild(layer);
+		var animFrames = [];
+		var inst = cc.spriteFrameCache;
+		var frame = inst.getSpriteFrame(res.box_close_png.substr(res.box_close_png.lastIndexOf('/') + 1));
+		animFrames.push(frame);
+		frame = inst.getSpriteFrame(res.box_open_full_png.substr(res.box_open_full_png.lastIndexOf('/') + 1));
+		animFrames.push(frame);
+		var animation = new cc.Animation(animFrames, 0.1);
+		var startPoint = layer.getStartPoint();
 		var listener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,
 			onTouchBegan: function(touch, event) {
 				// get touched tile 
-				var tile = layer.getTileAt(layer.convertTouchToNodeSpace(touch));
+				var pos = layer.convertTouchToNodeSpace(touch);
+				var tile = layer.getTileAt(Math.floor((pos.x - startPoint.x) / layer.tileWidth), 
+					Math.floor((pos.y - startPoint.y) / layer.tileHeight));
 				if (tile) {
-					cc.log('tile is touched');
+					var runningAction = new cc.Repeat(new cc.Animate(animation), 1);
+					tile.runAction(runningAction);
 				}
 				return true;
 			}
 		});
-		cc.eventManager.addListener(listener, boxes);
+		cc.eventManager.addListener(listener, layer);
 		cc.log('scene3');
+	}
+});
+
+var BoxesLayer = cc.Layer.extend({
+	sprites: [],
+	tileWidth: 70*1.2,
+	tileHeight: 62*1.2,
+	tileSpanX: 3,
+	tileSpanY: 3,
+	ctor: function() {
+		this._super();
+		var winSize = cc.winSize;
+		var tileWidth = this.tileWidth;
+		var tileHeight = this.tileHeight;
+		var x = (winSize.width - tileWidth * this.tileSpanX) / 2;
+		var y = (winSize.height - tileHeight * this.tileSpanY) / 2;
+		var inst = cc.spriteFrameCache;
+		inst.addSpriteFrames(res.open_box_empty_plist);
+		inst.addSpriteFrames(res.open_box_success_plist);
+
+		for (var i = 0; i < this.tileSpanX; i++) {
+			for (var j = 0; j < this.tileSpanY; j++) {
+				var sprite = new cc.Sprite(res.box_close_png);
+				sprite.setScale(.8);
+				sprite.setPosition(x + (i * tileWidth), y + (j * tileHeight));
+				this.sprites.push(sprite);
+				this.addChild(sprite);
+			}
+		}
+	},
+	getTileAt: function(i, j) {
+		return this.sprites[i * this.tileSpanX + j];
+	},
+	getStartPoint: function() {
+		var bound = this.sprites[0].getBoundingBox();
+		return cc.p(bound.x, bound.y);
 	}
 });
 
