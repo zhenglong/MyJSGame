@@ -12,7 +12,8 @@ var res = {
 	open_box_empty_png: 'res/open-box-empty.png',
 	open_box_success_png: 'res/open-box-success.png',
 	open_box_empty_plist: 'res/open-box-empty.plist',
-	open_box_success_plist: 'res/open-box-success.plist'
+	open_box_success_plist: 'res/open-box-success.plist',
+	coin_png: 'res/coin.png'
 };
 
 var g_resources = [];
