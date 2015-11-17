@@ -91,6 +91,7 @@ var PhysicsLayer = cc.Layer.extend({
 		body.setPos(p);
 		body.setVel(cp.v((Math.random() > .5 ? -1 : 1) * 200 * Math.random(),
 				150 * Math.random()));
+		body.setAngVel(Math.PI * Math.random());
 		this.space.addBody(body);
 
 		var shape = new cp.CircleShape(body, SPRITE_WIDTH / 2, cp.v(0, 0));

@@ -105,11 +105,22 @@ var ConversationLayer = cc.Layer.extend({
 	}
 });
 
+var SPRITE_WIDTH = 24;
+var SPRITE_HEIGHT = 24;
+var DEBUG_NODE_SHOW = true;
 var Scene3 = cc.Scene.extend({
+	space: null,
+	layer: null,
 	ctor: function() {
 		this._super();
-		var layer = new BoxesLayer();
-		this.addChild(layer);
+		this.initPhysics();
+		this.layer = new BoxesLayer();
+		this.addChild(this.layer);
+		this.scheduleUpdate();
+		cc.log('scene3');
+	},
+	onEnter: function() {
+		this._super();
 		var animFrames = [];
 		var inst = cc.spriteFrameCache;
 		var frame = inst.getSpriteFrame(res.box_close_png.substr(res.box_close_png.lastIndexOf('/') + 1));
@@ -117,7 +128,9 @@ var Scene3 = cc.Scene.extend({
 		frame = inst.getSpriteFrame(res.box_open_full_png.substr(res.box_open_full_png.lastIndexOf('/') + 1));
 		animFrames.push(frame);
 		var animation = new cc.Animation(animFrames, 0.1);
+		var layer = this.layer;
 		var startPoint = layer.getStartPoint();
+		var target = this;
 		var listener = cc.EventListener.create({
 			event: cc.EventListener.TOUCH_ONE_BY_ONE,
 			swallowTouches: true,
@@ -126,15 +139,60 @@ var Scene3 = cc.Scene.extend({
 				var pos = layer.convertTouchToNodeSpace(touch);
 				var tile = layer.getTileAt(Math.floor((pos.x - startPoint.x) / layer.tileWidth), 
 					Math.floor((pos.y - startPoint.y) / layer.tileHeight));
+				var location = touch.getLocation();
 				if (tile) {
 					var runningAction = new cc.Repeat(new cc.Animate(animation), 1);
 					tile.runAction(runningAction);
+
+					var i = 0;
+					function loop() {
+						setTimeout(function() {
+							target.addNewSpriteAtPosition(new cc.p(location.x, location.y));
+							i++;
+							if (i == 50) return;
+							loop();
+						}, 60);
+					}
+					loop();
 				}
 				return true;
 			}
 		});
 		cc.eventManager.addListener(listener, layer);
-		cc.log('scene3');
+	},
+	onExit: function() {
+		this._super();
+		cc.eventManager.removeEventListener(cc.EventListener.TOUCH_ONE_BY_ONE);
+	},
+	initPhysics: function() {
+		var winSize = cc.director.getWinSize();
+		this.space = new cp.Space();
+		this.space.gravity  = cp.v(0, -500);
+	},
+	addNewSpriteAtPosition: function(p) {
+		cc.log('addNewSpriteAtPosition');
+
+		var body = new cp.Body(1,cp.momentForBox(1, SPRITE_WIDTH, SPRITE_HEIGHT));
+		body.setPos(p);
+		body.setVel(cp.v((Math.random() > .5 ? -1 : 1) * 200 * Math.random(),
+				150 * Math.random()));
+		body.setAngVel(Math.PI * Math.random());
+		this.space.addBody(body);
+
+		var shape = new cp.CircleShape(body, SPRITE_WIDTH / 2, cp.v(0, 0));
+		shape.setElasticity(.5);
+		shape.setFriction(.5);
+		this.space.addShape(shape);
+
+		var sprite = new cc.PhysicsSprite(res.coin_png);
+		sprite.setScale(SPRITE_WIDTH / sprite.getContentSize().width);
+		sprite.setBody(body);
+		sprite.setPosition(cc.p(p.x, p.y));
+		this.addChild(sprite);
+	},
+	update: function(dt) {
+		var timeStep = .03;
+		this.space.step(timeStep);
 	}
 });
 
